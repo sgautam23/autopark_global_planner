@@ -1,0 +1,17 @@
+#request fields
+#geometry_msgs/PoseStamped[] query
+---
+#response fields
+#float64 pathcost
+
+
+
+#Local planner is running the path cost service
+# Gplanner queries with a spot 
+#Local Planner replies with a double value of the costs
+# Repeat for n spots
+#Decide on units of cost
+#bool request
+#TBD start and end geometry msgs
+#---
+#float32 cost 

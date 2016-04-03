@@ -1,0 +1,5 @@
+bool request
+#lot state
+#motion segments
+---
+int64 spots[2]

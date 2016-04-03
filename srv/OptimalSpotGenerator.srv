@@ -1,0 +1,6 @@
+bool request
+int32[] state
+int32 qval
+---
+int32[3] spots
+geometry_msgs/PoseStamped finalSpots
