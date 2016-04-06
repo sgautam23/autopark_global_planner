@@ -1,14 +1,21 @@
 #include <pathplanner.h>
+#include <string.h>
 
 
-
-d2Exitplanner::d2Exitplanner()
+d2Exitplanner::d2Exitplanner(const char* envName, const char* motPrim)
 {
     createFootprint();
-
     populateGoals();
 
+    envCfgFilename=strdup(envName);
+    motPrimFilename=strdup(motPrim);
+
     initializeEnv();
+
+    start.x= 2;
+    start.y=2;
+    start.th=0;
+
 }
 
 void d2Exitplanner::createFootprint()
@@ -32,7 +39,8 @@ void d2Exitplanner::createFootprint()
  
 void d2Exitplanner::initializeEnv()
 { 
-    if (!env.InitializeEnv(envCfgFilename, perimeter, motPrimFilename)) {
+    if (!env.InitializeEnv(envCfgFilename, perimeter, motPrimFilename)) 
+    {
         printf("ERROR: InitializeEnv failed\n");
         throw SBPL_Exception();
     }
@@ -67,20 +75,37 @@ void d2Exitplanner::initializePlanner(SBPLPlanner*& planner,int start_id, int go
     planner->set_search_mode(bsearchuntilfirstsolution);
 }
  
-int d2Exitplanner::runPlanner(SBPLPlanner* planner, int allocated_time_secs)
-{
-    int bRet = planner->replan(allocated_time_secs, &solution_stateIDs);
- 
-    if (bRet) 
-        printf("Solution is found\n");
-    else 
-        printf("Solution does not exist\n");
-    return bRet;
-}
 
 bool d2Exitplanner::plan()
 {
+    int start_id = env.SetStart(start.x, start.y, start.th); 
+    int goal_id;
+    int bRet;
+    for (int i =0; i <goal.size(); i++)
+    {
+        std::vector<int> solution_stateIDs;
+        SBPLPlanner* ARAplanner=NULL ;
 
+         goal_id = env.SetGoal(goal[i].x, goal[i].y, goal[i].th);
+
+         initializePlanner(ARAplanner, start_id,goal_id,initialEpsilon,bsearchuntilfirstsolution);
+
+         bRet = ARAplanner->replan(allocated_time_secs, &solution_stateIDs);
+
+         if (bRet)
+         {
+            spotCosts.push_back(solution_stateIDs.size());
+         }
+         else
+        {
+            spotCosts.push_back(-1);
+        }
+        
+        std::cout<<spotCosts[i];
+
+        delete ARAplanner;
+
+    }
 }
 
 

@@ -6,11 +6,8 @@ using namespace std;
 
 globalPlanner::globalPlanner()
 {
-	params={0.3,0.3,0.1,0.1,0.2};
-    if(pp->plan())
-    {
-        exitSpotCosts=pp->getSpotCosts();
-    }
+	//params={0.3,0.3,0.1,0.1,0.2};
+    
 
 
 }
@@ -22,7 +19,13 @@ void globalPlanner::getQuery(std::vector<int> state, int qval)
 }
 
 
-
+void globalPlanner::startD2Exitplanner()
+{
+    if(pp->plan())
+    {
+        exitSpotCosts=pp->getSpotCosts();
+    }
+}
 /*
 void PoseStampedtoPose(const geometry_msgs::PoseStamped& p1, Pose& p2)
 {

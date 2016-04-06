@@ -14,6 +14,8 @@
 #include <cassert>
 #include <cmath>
 #include <limits>
+#include <string>
+
 
 
 using namespace std;
@@ -30,7 +32,7 @@ class d2Exitplanner
 {
 public:
 
-	d2Exitplanner();
+	d2Exitplanner(const char* envName, const char* motPrim);
 
 	void createFootprint();
 	void initializeEnv();
@@ -39,7 +41,7 @@ public:
                        int start_id, int goal_id,
                        double initialEpsilon, 
                        bool bsearchuntilfirstsolution);
-	int runPlanner(SBPLPlanner* planner, int allocated_time_secs);
+
 	bool plan();
 
 	void populateGoals();
@@ -50,13 +52,15 @@ private:
 
 	char* envCfgFilename; //environment file name
 	char* motPrimFilename; //motion primitives
-	vector<sbpl_2Dpt_t> perimeter;
-	EnvironmentNAVXYTHETALAT env;
+	vector<sbpl_2Dpt_t> perimeter; //define the perimeter of the robot
+	EnvironmentNAVXYTHETALAT env; //the environment file
 	// SBPLPlanner* planner;
-	vector<int> solution_stateIDs;
-	std::vector<int> spotCosts;
+	// vector<int> solution_stateIDs; //vector containing the solution 
+	
+	std::vector<int> spotCosts; //store costs for all spots
 
-	std::vector<envState> goal;
+	envState start;
+	std::vector<envState> goal; //collection of all goals
 
 	double initialEpsilon = 5.0;
     bool bsearchuntilfirstsolution = false;

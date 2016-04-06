@@ -2,7 +2,10 @@
 #define gplanner_h
 
 #include <pathplanner.h>
+#include <string>
+#include <cstring>
 
+using namespace std;
 
 struct spotstate
 {
@@ -31,7 +34,8 @@ public:
 
 	virtual void getQuery(std::vector<int> state, int qval);
 
-	d2Exitplanner* pp;
+	void startD2Exitplanner();
+	
 	// gPlanner(
 	// 		//some input for an environment
 	// 	int nofspots,
@@ -55,8 +59,12 @@ public:
 
 
 private:
-
 	
+	std::string envName="/home/shivam/sbpl/env_examples/nav3d/env_autopark.cfg"; 
+	
+	//std::string envName="/home/shivam/sbpl/env_examples/nav3d/willow-25mm-inflated-env.cfg";
+	std::string motPrim="/home/shivam/sbpl/matlab/mprim/unicycle_noturninplace.mprim ";
+	d2Exitplanner* pp =  new d2Exitplanner(envName.c_str(), motPrim.c_str());
 	tuningParams params;
 	std::vector<int> exitSpotCosts;
 

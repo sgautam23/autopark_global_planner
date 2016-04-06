@@ -9,7 +9,7 @@
 int main( int argc, char ** argv)
 
 {
-	globalPlanner planner; //create an object of the global planner
+	//globalPlanner planner; //create an object of the global planner
 	
 	ros::init (argc,argv,"Global_planner"); //initialise the ROS node	
 	ros::NodeHandle nh;
