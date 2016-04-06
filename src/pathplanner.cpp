@@ -6,6 +6,7 @@ d2Exitplanner::d2Exitplanner()
 {
     createFootprint();
 
+    populateGoals();
 
     initializeEnv();
 }
@@ -66,8 +67,8 @@ void d2Exitplanner::initializePlanner(SBPLPlanner*& planner,int start_id, int go
     planner->set_search_mode(bsearchuntilfirstsolution);
 }
  
-int runPlanner(SBPLPlanner* planner, int allocated_time_secs, 
-               vector<int>&solution_stateIDs){
+int d2Exitplanner::runPlanner(SBPLPlanner* planner, int allocated_time_secs)
+{
     int bRet = planner->replan(allocated_time_secs, &solution_stateIDs);
  
     if (bRet) 
@@ -75,4 +76,40 @@ int runPlanner(SBPLPlanner* planner, int allocated_time_secs,
     else 
         printf("Solution does not exist\n");
     return bRet;
+}
+
+bool d2Exitplanner::plan()
+{
+
+}
+
+
+ void d2Exitplanner::populateGoals ()
+{
+    struct envState pt1;
+    pt1.x=6.25;
+    pt1.y=1.75;
+    pt1.th=0;
+
+    for(int i = 0; i <8; i++)
+    {   
+        pt1.x=6.25;
+     
+        for (int j=0;j<13;j++)
+        {   
+            // cout<<pt1.x<<" "<<pt1.y<<endl;
+            goal.push_back(pt1);
+            pt1.x+=2.5;
+        }
+
+    pt1.y+= i%2==0 ?8.5 : 3.5;
+
+    }
+        //env.GetCoordFromState(int stateID, int& x, int& y, int& theta) const;
+
+}
+
+std::vector<int> d2Exitplanner::getSpotCosts()
+{
+    return spotCosts;
 }

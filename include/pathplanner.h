@@ -39,9 +39,10 @@ public:
                        int start_id, int goal_id,
                        double initialEpsilon, 
                        bool bsearchuntilfirstsolution);
-	int runPlanner(SBPLPlanner* planner, int allocated_time_secs, 
-               vector<int>&solution_stateIDs);
-	void plan();
+	int runPlanner(SBPLPlanner* planner, int allocated_time_secs);
+	bool plan();
+
+	void populateGoals();
 
 	std::vector<int> getSpotCosts();
 
@@ -54,6 +55,8 @@ private:
 	// SBPLPlanner* planner;
 	vector<int> solution_stateIDs;
 	std::vector<int> spotCosts;
+
+	std::vector<envState> goal;
 
 	double initialEpsilon = 5.0;
     bool bsearchuntilfirstsolution = false;

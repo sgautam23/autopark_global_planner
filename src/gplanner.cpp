@@ -7,6 +7,12 @@ using namespace std;
 globalPlanner::globalPlanner()
 {
 	params={0.3,0.3,0.1,0.1,0.2};
+    if(pp->plan())
+    {
+        exitSpotCosts=pp->getSpotCosts();
+    }
+
+
 }
 
 

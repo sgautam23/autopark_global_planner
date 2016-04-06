@@ -30,6 +30,8 @@ public:
 	globalPlanner();
 
 	virtual void getQuery(std::vector<int> state, int qval);
+
+	d2Exitplanner* pp;
 	// gPlanner(
 	// 		//some input for an environment
 	// 	int nofspots,
@@ -56,6 +58,7 @@ private:
 
 	
 	tuningParams params;
+	std::vector<int> exitSpotCosts;
 
 
 
