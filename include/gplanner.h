@@ -63,7 +63,7 @@ private:
 	std::string envName="/home/shivam/sbpl/env_examples/nav3d/env_autopark.cfg"; 
 	
 	//std::string envName="/home/shivam/sbpl/env_examples/nav3d/willow-25mm-inflated-env.cfg";
-	std::string motPrim="/home/shivam/sbpl/matlab/mprim/unicycle_noturninplace.mprim ";
+	std::string motPrim="/home/shivam/sbpl/matlab/mprim/unicycle_noturninplace.mprim";
 	d2Exitplanner* pp =  new d2Exitplanner(envName.c_str(), motPrim.c_str());
 	tuningParams params;
 	std::vector<int> exitSpotCosts;

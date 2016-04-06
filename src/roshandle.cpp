@@ -7,7 +7,7 @@ ROShandle::ROShandle(ros::NodeHandle& n)
 	{
 	nh=n;
 	init_ros();
-	
+	gp.startD2Exitplanner();
 
 	}
 

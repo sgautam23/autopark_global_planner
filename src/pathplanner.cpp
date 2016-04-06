@@ -46,15 +46,6 @@ void d2Exitplanner::initializeEnv()
     }
 }
  
-// void d2Exitplanner::setEnvStartGoal(EnvironmentNAVXYTHETALAT& env, 
-//                      double start_x, double start_y, double start_theta,
-//                      double goal_x, double goal_y, double goal_theta, 
-//                      int& start_id, int& goal_id){
- 
-//     start_id = env.SetStart(start_x, start_y, start_theta);
-//     goal_id = env.SetGoal(goal_x, goal_y, goal_theta);
-// }
- 
 void d2Exitplanner::initializePlanner(SBPLPlanner*& planner,int start_id, int goal_id,
                        double initialEpsilon, 
                        bool bsearchuntilfirstsolution){
