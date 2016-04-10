@@ -1,11 +1,19 @@
 #include <pathplanner.h>
 #include <string.h>
+#include <fstream>
+#include <iostream>
 
+using namespace std;
+
+float round2(float num)
+{
+    num= float( num*100 + 0.5) /100.00;
+}
 
 d2Exitplanner::d2Exitplanner(const char* envName, const char* motPrim)
 {
     createFootprint();
-    populateGoals();
+    
 
     envCfgFilename=strdup(envName);
     motPrimFilename=strdup(motPrim);
@@ -15,14 +23,15 @@ d2Exitplanner::d2Exitplanner(const char* envName, const char* motPrim)
     start.x= 2;
     start.y=2;
     start.th=0;
+    populateGoals();
 
 }
 
 void d2Exitplanner::createFootprint()
 {
     sbpl_2Dpt_t pt_m;
-    double halfwidth = 0.5;
-    double halflength = 0.5;
+    double halfwidth = 0.01;
+    double halflength = 0.01;
     pt_m.x = -halflength;
     pt_m.y = -halfwidth;
     perimeter.push_back(pt_m);
@@ -38,50 +47,104 @@ void d2Exitplanner::createFootprint()
 }
  
 void d2Exitplanner::initializeEnv()
-{ 
-    if (!env.InitializeEnv(envCfgFilename, perimeter, motPrimFilename)) 
+{   
+     
+    env = new EnvironmentNAVXYTHETALAT();
+    
+    if (!env->InitializeEnv(envCfgFilename, perimeter, motPrimFilename)) 
     {
         printf("ERROR: InitializeEnv failed\n");
         throw SBPL_Exception();
     }
 }
  
-void d2Exitplanner::initializePlanner(SBPLPlanner*& planner,int start_id, int goal_id,
-                       double initialEpsilon, 
-                       bool bsearchuntilfirstsolution){
-    // work this out later, what is bforwardsearch?
-    bool bsearch = false;
-    planner = new ADPlanner(&env, bsearch);
+// void d2Exitplanner::initializePlanner(SBPLPlanner*& planner,int start_id, int goal_id,
+//                        double initialEpsilon, 
+//                        bool bsearchuntilfirstsolution)
+// {
+
+//     bool bsearch = false;
+//     planner = new ARAPlanner(&env, bsearch);
  
-    // set planner properties
-    if (planner->set_start(start_id) == 0) {
-        printf("ERROR: failed to set start state\n");
-        throw new SBPL_Exception();
-    }
-    if (planner->set_goal(goal_id) == 0) {
-        printf("ERROR: failed to set goal state\n");
-        throw new SBPL_Exception();
-    }
-    planner->set_initialsolution_eps(initialEpsilon);
-    planner->set_search_mode(bsearchuntilfirstsolution);
+//     // set planner properties
+//     if (planner->set_start(start_id) == 0) {
+//         printf("ERROR: failed to set start state\n");
+//         throw new SBPL_Exception();
+//     }
+//     if (planner->set_goal(goal_id) == 0) {
+//         printf("ERROR: failed to set goal state\n");
+//         throw new SBPL_Exception();
+//     }
+//     planner->set_initialsolution_eps(initialEpsilon);
+//     planner->set_search_mode(bsearchuntilfirstsolution);
+// }
+ 
+
+
+void d2Exitplanner :: initializePlanner(EnvironmentNAVXYTHETALAT* env)
+{
+  bool bforwardsearch=true;
+  planner = new ARAPlanner(env, bforwardsearch);
+  //get start and goal from env
+  MDPConfig MDPCfg;
+
+  // initialize MDP info
+  if (!env->InitializeMDPCfg(&MDPCfg)) {
+    printf("ERROR: InitializeMDPCfg failed\n");
+    throw new SBPL_Exception();
+  }
+  // set planner properties
+  if (planner->set_start(MDPCfg.startstateid) == 0) {
+    printf("ERROR: failed to set start state\n");
+    throw new SBPL_Exception();
+  }
+  if (planner->set_goal(MDPCfg.goalstateid) == 0) {
+    printf("ERROR: failed to set goal state\n");
+    throw new SBPL_Exception();
+  }
+  planner->set_initialsolution_eps(initialEpsilon);
+  planner->set_search_mode(bsearchuntilfirstsolution);
 }
- 
+
 
 bool d2Exitplanner::plan()
-{
-    int start_id = env.SetStart(start.x, start.y, start.th); 
+{   
+    
+    int start_id = env->SetStart(start.x, start.y, start.th); 
     int goal_id;
     int bRet;
+    initializePlanner(env);
+
+    ofstream costFile("costs.txt");
+
     for (int i =0; i <goal.size(); i++)
-    {
+    {   
+        if( i==91)
+        {
+            spotCosts.push_back(450);
+            continue;
+        }
+
+        std::cout<<"Running planner for spot: "<<i+1<<endl;
         std::vector<int> solution_stateIDs;
-        SBPLPlanner* ARAplanner=NULL ;
+        
 
-         goal_id = env.SetGoal(goal[i].x, goal[i].y, goal[i].th);
+         start_id = env->SetStart(start.x, start.y, start.th); 
+         goal_id = env->SetGoal(goal[i].x, goal[i].y, goal[i].th);
 
-         initializePlanner(ARAplanner, start_id,goal_id,initialEpsilon,bsearchuntilfirstsolution);
+         // initializePlanner(ARAplanner, start_id,goal_id,initialEpsilon,bsearchuntilfirstsolution);
 
-         bRet = ARAplanner->replan(allocated_time_secs, &solution_stateIDs);
+         if (planner->set_start(start_id) == 0) {
+            printf("ERROR: Unable to set planner start id\n");
+            throw new SBPL_Exception();
+        }
+
+        if (planner->set_goal(goal_id) == 0) {
+            printf("ERROR: Unable to set planner start id\n");
+            throw new SBPL_Exception();
+        }
+
+         bRet = planner->replan(allocated_time_secs, &solution_stateIDs);
 
          if (bRet)
          {
@@ -92,11 +155,15 @@ bool d2Exitplanner::plan()
             spotCosts.push_back(-1);
         }
         
-        std::cout<<spotCosts[i];
-
-        delete ARAplanner;
+        std::cout<<"Cost for spot "<<i<<" "<<spotCosts[i]<<endl;
+        costFile<<spotCosts[i]<<endl;
+        reinitEnvironment();
+        reinitPlanner();
+        
 
     }
+    costFile.close();
+    return true;
 }
 
 
@@ -113,19 +180,35 @@ bool d2Exitplanner::plan()
      
         for (int j=0;j<13;j++)
         {   
-            // cout<<pt1.x<<" "<<pt1.y<<endl;
+            cout<<pt1.x<<" "<<pt1.y<<endl;
             goal.push_back(pt1);
-            pt1.x+=2.5;
+            pt1.x+= 2.50;
+
         }
 
-    pt1.y+= i%2==0 ?8.5 : 3.5;
+    pt1.y += i%2==0 ?8.50 : 3.50;
+    pt1.y=round2(pt1.y);
 
     }
         //env.GetCoordFromState(int stateID, int& x, int& y, int& theta) const;
 
 }
 
-std::vector<int> d2Exitplanner::getSpotCosts()
+std::vector<double> d2Exitplanner::getSpotCosts()
 {
     return spotCosts;
+}
+
+void d2Exitplanner::reinitPlanner()
+    {   
+        printf("Re-Intializing Planner...\n");
+        delete planner;
+        initializePlanner(env);
+
+    }
+
+void d2Exitplanner::reinitEnvironment()
+{
+    delete env;
+    initializeEnv();
 }

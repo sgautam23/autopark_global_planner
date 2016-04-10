@@ -1,15 +1,23 @@
 #include <roshandle.h>
 
 
-
+#define CACHED 1
 
 ROShandle::ROShandle(ros::NodeHandle& n)
-	{
+{
 	nh=n;
 	init_ros();
-	gp.startD2Exitplanner();
 
+	if (!CACHED)
+	{	
+		gp.startD2Exitplanner();
 	}
+
+	else
+	{
+		gp.useCache();
+	}
+}
 
 bool ROShandle::estimation(gplanner::OptimalSpotGenerator::Request &req, gplanner::OptimalSpotGenerator::Response &res)
 
@@ -34,16 +42,17 @@ bool ROShandle::estimation(gplanner::OptimalSpotGenerator::Request &req, gplanne
 		}
 		
 		*/
-	res.spots[0]=0;
-	res.spots[1]=0;
-	res.spots[2]=0;
-	
+	// res.spots[0]=0;
+	// res.spots[1]=0;
+	// res.spots[2]=0;
+
 //	pose={0,0};
 //	posestamped=PosetoPoseStamped(posestamped,pose);
 //	res.finalSpots= posestamped;
 
-	ROS_INFO("Response sent to rEngine");
-	return true;
+		res.spot=gp.returnFinalSpot();
+		ROS_INFO("Response sent to rEngine");
+		return true;
 	}
 }
 
@@ -52,6 +61,6 @@ void ROShandle::init_ros()
 {
 		optimalSpot = nh.advertiseService("OptimalSpotGenerator",&ROShandle::estimation,this); //initialise the ROS service for the spot query
 		lplanner_client = nh.serviceClient<gplanner::SpotsTreadCost>("Local_Planner_Cost_Service");
-	
-	
-}
+
+
+	}

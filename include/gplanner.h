@@ -34,39 +34,33 @@ public:
 
 	virtual void getQuery(std::vector<int> state, int qval);
 
-	void startD2Exitplanner();
+	void initCosts();
+
+	void startD2Exitplanner(); 
+
+	virtual void getTimeCosts();
 	
-	// gPlanner(
-	// 		//some input for an environment
-	// 	int nofspots,
-	// 	int qsize
+	void calculateFinalCosts(std::vector<int> state);
 
-	// 	); //will give an error if not initialised in cpp file
+	int returnFinalSpot();
 
+	void useCache();
 
-	// virtual void plan();
-	
-
-	// virtual void getTimeCosts();
-	
-	// virtual void getplanrequest();
-
-	
-	
-	
-
-	//virtual void computeCost();
-
+	std::vector<double> normalize(std::vector<double> v);
 
 private:
 	
-	std::string envName="/home/shivam/sbpl/env_examples/nav3d/env_autopark.cfg"; 
-	
-	//std::string envName="/home/shivam/sbpl/env_examples/nav3d/willow-25mm-inflated-env.cfg";
+	std::string envName="/home/shivam/sbpl/env_examples/nav3d/env_autopark_thin.cfg"; 
 	std::string motPrim="/home/shivam/sbpl/matlab/mprim/unicycle_noturninplace.mprim";
+	
 	d2Exitplanner* pp =  new d2Exitplanner(envName.c_str(), motPrim.c_str());
 	tuningParams params;
-	std::vector<int> exitSpotCosts;
+	
+	std::vector<double> exitSpotCosts;
+	std::vector<double> finalSpotCosts;
+	int qSize;
+
+	int nofSpots;
 
 
 
