@@ -8,6 +8,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include "localplanner/spotsTreadCost.h"
 #include <tf/tf.h>
+#include <ros/ros.h>
+#include <ros/package.h>
 
 using namespace std;
 
@@ -60,11 +62,19 @@ public:
 
 	void getPathCosts(int i,float pathcost);
 
+	void getBestArea(int a);
+
+	int spotToArea(int pos);
+
 
 
 
 private:
 	
+	// std::string path = ros::package::getPath("sbpl");
+	// std::string envName=path+"/env_examples/nav3d/env_autopark_thin.cfg"; 
+	// std::string motPrim=path+"/matlab/mprim/unicycle_noturninplace.mprim";
+
 	std::string envName="/home/shivam/sbpl/env_examples/nav3d/env_autopark_thin.cfg"; 
 	std::string motPrim="/home/shivam/sbpl/matlab/mprim/unicycle_noturninplace.mprim";
 	
@@ -81,6 +91,7 @@ private:
 
 	worldtime::timemsg peak;
 	int duration;
+	int area;
 
 
 

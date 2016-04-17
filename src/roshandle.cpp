@@ -1,7 +1,7 @@
 #include <roshandle.h>
 
 
-#define CACHED 1
+
 
 ROShandle::ROShandle(ros::NodeHandle& n)
 {
@@ -28,6 +28,23 @@ bool ROShandle::estimation(gplanner::OptimalSpotGenerator::Request &req, gplanne
 		ROS_INFO("Request Received from rEngine");
 
 		gp.getQuery(req.qval);
+
+		if (MAB)
+		{
+			ROS_INFO("Request sent to MAB");
+			mab_req.request.request=true;
+			if (mab_client.call(mab_req))
+			{
+				ROS_INFO("Response received from MAB");
+
+			
+			}
+
+			else
+			{
+				ROS_INFO("Failed to get response from MAB");
+			}
+		}
 
 		for ( int i=0; i<5;i++)
 		{
@@ -73,6 +90,7 @@ void ROShandle::init_ros()
 {
 		optimalSpot = nh.advertiseService("OptimalSpotGenerator",&ROShandle::estimation,this); //initialise the ROS service for the spot query
 		lplanner_client = nh.serviceClient<localplanner::spotsTreadCost>("spotsTreadCost");
+		mab_client=nh.serviceClient<gplanner::mab>("MabPlanner");
 		wtimesub =nh.subscribe("worldtime",10,&globalPlanner::timeUpdate,&gp);
 
 	}

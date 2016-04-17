@@ -1,0 +1,5 @@
+#request fields
+bool request
+---
+#response fields
+int32 area

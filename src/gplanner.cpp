@@ -9,13 +9,14 @@
 using namespace std;
 
 #define INF 1000000
+#define MAB 1
 
 globalPlanner::globalPlanner()
 {
-	params.wexit=0.5;
-    params.wpath=1;
-    params.woccupied=1;
-    params.wqueue=2;
+	params.wexit=1.1;
+    params.wpath=1.5;
+    params.woccupied=1.2;
+    params.wqueue=1;
     params.wtime=1;
 
     nofSpots=104;
@@ -34,6 +35,11 @@ void globalPlanner::getQuery(int qval)
     qSize=qval;
     calculateFinalCosts();
 
+}
+
+void globalPlanner::getBestArea(int a)
+{
+    area=a;
 }
 
 
@@ -66,6 +72,7 @@ void globalPlanner::calculateFinalCosts()
     {
         sum+=*it;
     }
+
     
     for (int i=0; i< nofSpots;i++)
     {
@@ -82,6 +89,17 @@ void globalPlanner::calculateFinalCosts()
 int globalPlanner::getBestSpot(int i,localplanner::spotsTreadCost& lplanner) //get the i'th best spot
 {
     std::vector<double> costs_temp(finalSpotCosts);
+    
+    int j=0;
+    for (std::vector<double>::iterator it=costs_temp.begin();it!=costs_temp.end();++it,j++)
+    {
+        int ar= spotToArea(j);
+        if (ar!=area)
+        {
+            *it=INF;
+        }
+    }
+
     std::sort(costs_temp.begin(),costs_temp.end());
     int pos= find(finalSpotCosts.begin(),finalSpotCosts.end(),costs_temp[i]) - finalSpotCosts.begin();
     
@@ -104,6 +122,29 @@ int globalPlanner::getBestSpot(int i,localplanner::spotsTreadCost& lplanner) //g
 
     return pos;
 
+}
+
+int globalPlanner::spotToArea(int pos)
+{
+    struct envState e=pp->spotIDtoCoord(pos);
+    struct envState max=pp->spotIDtoCoord(nofSpots-1);
+    
+    double Xmax=max.x;
+    double Ymax=max.y;
+
+    int ar;
+    
+    if (e.x< Xmax/2)
+    {
+         ar = e.y< Ymax/2 ? 0 : 1;
+    }
+
+    else
+    {
+         ar= e.y <Ymax/2 ? 2 : 3;
+    }
+
+    return ar;
 }
 
 void globalPlanner::getPathCosts(int i, float pathcost)
@@ -136,7 +177,11 @@ void globalPlanner::useCache()
    
     std::ifstream costFile;
     std::string s;
-    openFile(costFile,"/home/shivam/catkin_ws/costs.txt");
+    //std::string cpath = ros::package::getPath("gplanner");
+    //openFile(costFile,cpath+"/costs.txt");
+    
+    openFile(costFile,"/home/shivam/catkin_ws/src/gplanner/costs.txt");
+
     //("costs.txt", std::ios::in);
     //costFile.clear();
     //costFile.seekg(0, ios::beg);
