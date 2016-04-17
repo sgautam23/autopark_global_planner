@@ -12,25 +12,27 @@ using namespace std;
 
 globalPlanner::globalPlanner()
 {
-	params.wexit=1;
-    params.wentry=1;
+	params.wexit=0.5;
+    params.wpath=1;
     params.woccupied=1;
-    params.wqueue=1;
+    params.wqueue=2;
     params.wtime=1;
 
     nofSpots=104;
     initCosts();
-    
+
+    peak.hr = 20;
+    peak.min = 00;
 
 
 }
 
 
-void globalPlanner::getQuery(std::vector<int> state, int qval)
+void globalPlanner::getQuery(int qval)
 {
 	//cout<<qval;
     qSize=qval;
-    calculateFinalCosts(state);
+    calculateFinalCosts();
 
 }
 
@@ -48,69 +50,130 @@ void globalPlanner::initCosts()
 {
     for (int i=0;i<nofSpots;i++)
     {
-        exitSpotCosts.push_back(i);
+        exitSpotCosts.push_back(nofSpots-i);
         finalSpotCosts.push_back(0);
+        state.push_back(0);
+        pathcosts.push_back(0);
     }
 }
 
-void globalPlanner::getTimeCosts()
-{
-}
 
-void globalPlanner::calculateFinalCosts(std::vector<int> state)
-{
+void globalPlanner::calculateFinalCosts()
 
-    std::vector<double> normExitCosts;
-    normExitCosts=normalize(exitSpotCosts);
+{   
+    int sum=0;
+    for (std::vector<double>::iterator it =exitSpotCosts.begin(); it!=exitSpotCosts.end(); ++it)
+    {
+        sum+=*it;
+    }
+    
     for (int i=0; i< nofSpots;i++)
     {
-        //if(state[i]==1)
-        // {
-        //     finalSpotCosts[i]=INF;
-        // }
-        // else
-        // {
-            finalSpotCosts[i]= params.wexit*normExitCosts[i]+ params.wqueue*qSize*i/1000 +
-            params.wtime * i;
-        // }
+        
+            finalSpotCosts[i]= params.wexit*exitSpotCosts[i]/sum+ 
+                                params.wqueue*qSize*i/100 +          
+                                params.wtime * (nofSpots-i) + 
+                                state[i]*INF + params.wpath* pathcosts[i];
     }
 
-    // write code to find minimum from best five spots and query local planner based on that
 
+}
 
+int globalPlanner::getBestSpot(int i,localplanner::spotsTreadCost& lplanner) //get the i'th best spot
+{
+    std::vector<double> costs_temp(finalSpotCosts);
+    std::sort(costs_temp.begin(),costs_temp.end());
+    int pos= find(finalSpotCosts.begin(),finalSpotCosts.end(),costs_temp[i]) - finalSpotCosts.begin();
+    
+
+    struct envState e=pp->spotIDtoCoord(pos);
+
+    lplanner.request.goal.pose.position.x=e.x;
+    lplanner.request.goal.pose.position.y=e.y;
+    lplanner.request.goal.pose.orientation.x=0;
+    lplanner.request.goal.pose.orientation.y=0;
+    lplanner.request.goal.pose.orientation.z=0;
+    lplanner.request.goal.pose.orientation.w=1;
+
+    lplanner.request.start.pose.position.x=2.5;
+    lplanner.request.start.pose.position.y=2;
+    lplanner.request.start.pose.orientation.x=0;
+    lplanner.request.start.pose.orientation.y=0;
+    lplanner.request.start.pose.orientation.z=0;
+    lplanner.request.start.pose.orientation.w=1;
+
+    return pos;
+
+}
+
+void globalPlanner::getPathCosts(int i, float pathcost)
+{
+    pathcosts[i]=pathcost;
+}
+
+void openFile(std::ifstream& file, std::string filename)
+{
+    while(true)
+    {
+        file.open(filename.c_str());
+        if(file.is_open())
+        {
+            break;
+        }
+        else
+        {
+            std::cerr<<"No such file exists with name "<< filename << std::endl;
+            file.clear();
+            // ros::Duration(0.1).sleep(); //sleep coz blaaahhhhh
+        } 
+
+    }
 }
 
 void globalPlanner::useCache()
 {   
-    double num;
-    std::ifstream costFile("costs.txt", std::ios::in);
-    for(int i =0; i<(exitSpotCosts.size()); i++)
+    double num=0;
+   
+    std::ifstream costFile;
+    std::string s;
+    openFile(costFile,"/home/shivam/catkin_ws/costs.txt");
+    //("costs.txt", std::ios::in);
+    //costFile.clear();
+    //costFile.seekg(0, ios::beg);
+    cout<<"Cached  Costs"<<endl;
+    int i=0;
+    while(getline(costFile,s))
     {   
-        costFile>>num;
+        std::stringstream ss(s);
+        double num;     
+        ss>>num;
         exitSpotCosts[i]=num;
-        cout<<exitSpotCosts[i]<<endl;
-        if (costFile.eof())
-        {
-            while(i<exitSpotCosts.size())
-            {
-                exitSpotCosts[i]=double(num);
-                cout<<i<<" "<<num<<" "<<exitSpotCosts[i]<<endl;
-                i++;
-            }
-            break;
-        }
+        i++;
 
+        cout<<exitSpotCosts[i]<<endl;
     }
 
+
 }
+
+
 int globalPlanner::returnFinalSpot()
 {
     auto spot =std::min_element(std::begin(finalSpotCosts),std::end(finalSpotCosts));
-    return std::distance(std::begin(finalSpotCosts),spot);
+    
+    int i= std::distance(std::begin(finalSpotCosts),spot);
+
+    state[i]=1;
+
+    if (i!=0 || i!=nofSpots)
+        {
+            state[i-1]+=0.00001*params.woccupied;
+            state[i+1]+=0.00001*params.woccupied;}
+    return i;
 
 }
 
-std::vector<double> globalPlanner::normalize(std::vector<double> v)
+void globalPlanner::normalize(std::vector<double>& v)
 {   
     double sum=0;
     for (std::vector<double>::iterator it =v.begin(); it!=v.end(); ++it)
@@ -124,28 +187,20 @@ std::vector<double> globalPlanner::normalize(std::vector<double> v)
     }
 
 }
-/*
-void PoseStampedtoPose(const geometry_msgs::PoseStamped& p1, Pose& p2)
+
+envState globalPlanner::returnConfig(int i)
 {
-    p2.x =  p1.pose.position.x;
-    p2.y = p1.pose.position.y;
-    tf::Quaternion p1_quat = tf::Quaternion(p1.pose.orientation.x,p1.pose.orientation.y,
-                                            p1.pose.orientation.z, p1.pose.orientation.w);
-    p2.th = tf::getYaw(p1_quat);
+    struct envState e=pp->spotIDtoCoord(i);
+    cout<<" GOALS SENT "<<e.x<<" "<<e.y<<" "<<e.y;
+    return e;
+}
+
+void globalPlanner::timeUpdate(const worldtime::timemsg::ConstPtr& msg)
+{
+    // param.wtime
+
+    int difference = abs( (msg->hr - peak.hr)*60 + (msg->min - peak.min));  
+    params.wtime= 60.0/difference;
+
 
 }
-void PosetoPoseStamped(geometry_msgs::PoseStamped& p1, const Pose& p2)
-{
-    
-    tf::Quaternion p1_quat = tf::createQuaternionFromYaw(p2.th);
-            
-    p1.pose.position.x = p2.x;
-    p1.pose.position.y = p2.y;
-              
-    p1.pose.orientation.x = p1_quat.x();
-    p1.pose.orientation.y = p1_quat.y();
-    p1.pose.orientation.z = p1_quat.z();
-    p1.pose.orientation.w = p1_quat.w();
-
-}
-*/

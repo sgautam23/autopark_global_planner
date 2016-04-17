@@ -21,9 +21,9 @@ using namespace std;
 
 struct envState{
 
-float x; //x location of the state in meters
-float y; //y location of that state in meters
-float th; //theta at that state
+double x; //x location of the state in meters
+double y; //y location of that state in meters
+double th; //theta at that state
 
 };
 
@@ -51,6 +51,11 @@ public:
 
 	void reinitPlanner();
 	void reinitEnvironment();
+
+	envState spotIDtoCoord(int i);
+
+
+
 private:
 
 	char* envCfgFilename; //environment file name
@@ -72,6 +77,8 @@ private:
 	double initialEpsilon = 15.0;
     bool bsearchuntilfirstsolution = false;
     double allocated_time_secs = 5.0;
+
+
 
 
 

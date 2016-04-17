@@ -1,0 +1,6 @@
+#request fields
+geometry_msgs/PoseStamped start
+geometry_msgs/PoseStamped goal
+---
+#response fields
+float64 pathcost

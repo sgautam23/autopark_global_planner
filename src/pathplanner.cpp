@@ -20,8 +20,8 @@ d2Exitplanner::d2Exitplanner(const char* envName, const char* motPrim)
 
     initializeEnv();
 
-    start.x= 2;
-    start.y=2;
+    start.x= 46.0;
+    start.y=40.0;
     start.th=0;
     populateGoals();
 
@@ -110,7 +110,7 @@ void d2Exitplanner :: initializePlanner(EnvironmentNAVXYTHETALAT* env)
 bool d2Exitplanner::plan()
 {   
     
-    int start_id = env->SetStart(start.x, start.y, start.th); 
+    int start_id;
     int goal_id;
     int bRet;
     initializePlanner(env);
@@ -174,6 +174,7 @@ bool d2Exitplanner::plan()
     pt1.y=1.75;
     pt1.th=0;
 
+    cout<<"Populating Goals";
     for(int i = 0; i <8; i++)
     {   
         pt1.x=6.25;
@@ -187,9 +188,11 @@ bool d2Exitplanner::plan()
         }
 
     pt1.y += i%2==0 ?8.50 : 3.50;
-    pt1.y=round2(pt1.y);
+    //pt1.y=round2(pt1.y);
 
     }
+
+    cout<<"Goals Populated";
         //env.GetCoordFromState(int stateID, int& x, int& y, int& theta) const;
 
 }
@@ -211,4 +214,19 @@ void d2Exitplanner::reinitEnvironment()
 {
     delete env;
     initializeEnv();
+}
+
+envState d2Exitplanner::spotIDtoCoord(int i)
+{
+    envState e;
+
+    cout<<" GOALS SENT "<<goal[i].x<<" "<<goal[i].y<<" "<<goal[i].y;
+    
+    e.x=goal[i].x;
+    e.y=goal[i].y;
+    e.th=goal[i].th;
+    cout<<" GOALS SENT "<<e.x<<" "<<e.y<<" "<<e.y;
+
+    return e;
+    
 }

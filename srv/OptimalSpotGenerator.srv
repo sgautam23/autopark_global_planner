@@ -1,7 +1,7 @@
 bool request
-int32[] state
+#int32[] state
 int32 qval
 ---
-#int32[3] spots
+float32[3] spots
 #geometry_msgs/PoseStamped finalSpots
-int32 spot
+#int32 spot

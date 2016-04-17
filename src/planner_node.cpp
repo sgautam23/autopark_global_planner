@@ -14,8 +14,13 @@ int main( int argc, char ** argv)
 	ros::init (argc,argv,"Global_planner"); //initialise the ROS node	
 	ros::NodeHandle nh;
 	ROShandle ros(nh);
+	ros::Rate rate(20.0);
+	while( ros::ok() ) {
+        ros::Duration(0.02).sleep();
+        ros::spinOnce();
+    }
 	
-	ros::spin();
+	// ros::spin();
 
 
 	return 0;
