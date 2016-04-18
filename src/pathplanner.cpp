@@ -220,12 +220,12 @@ envState d2Exitplanner::spotIDtoCoord(int i)
 {
     envState e;
 
-    cout<<" GOALS SENT "<<goal[i].x<<" "<<goal[i].y<<" "<<goal[i].y;
+    //cout<<" GOALS SENT "<<goal[i].x<<" "<<goal[i].y<<" "<<goal[i].y;
     
     e.x=goal[i].x;
     e.y=goal[i].y;
     e.th=goal[i].th;
-    cout<<" GOALS SENT "<<e.x<<" "<<e.y<<" "<<e.y;
+    // cout<<" GOALS SENT "<<e.x<<" "<<e.y<<" "<<e.y;
 
     return e;
     

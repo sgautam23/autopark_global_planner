@@ -236,7 +236,7 @@ void globalPlanner::normalize(std::vector<double>& v)
 envState globalPlanner::returnConfig(int i)
 {
     struct envState e=pp->spotIDtoCoord(i);
-    cout<<" GOALS SENT "<<e.x<<" "<<e.y<<" "<<e.y;
+    //cout<<" GOALS SENT "<<e.x<<" "<<e.y<<" "<<e.y;
     return e;
 }
 
