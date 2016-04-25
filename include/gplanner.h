@@ -7,6 +7,8 @@
 #include <worldtime/timemsg.h>
 #include <geometry_msgs/PoseStamped.h>
 #include "localplanner/spotsTreadCost.h"
+#include <std_msgs/Int64.h>
+
 #include <tf/tf.h>
 #include <ros/ros.h>
 #include <ros/package.h>
@@ -66,6 +68,10 @@ public:
 
 	int spotToArea(int pos);
 
+	void setState(int pos);
+
+	void unpark(const std_msgs::Int64::ConstPtr& data);
+
 
 
 
@@ -85,6 +91,7 @@ private:
 	std::vector<double> finalSpotCosts;
 	std::vector<int> state;
 	std::vector<float> pathcosts;
+
 
 	int qSize;
 	int nofSpots;

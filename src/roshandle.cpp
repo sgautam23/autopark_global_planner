@@ -19,9 +19,14 @@ ROShandle::ROShandle(ros::NodeHandle& n)
 	}
 }
 
+
+
 bool ROShandle::estimation(gplanner::OptimalSpotGenerator::Request &req, gplanner::OptimalSpotGenerator::Response &res)
 
 {	
+	std::vector<pair<int,double>> top5spots;
+	bool call=false;
+	int spotNo;
 
 	if (req.request)
 	{	
@@ -36,7 +41,8 @@ bool ROShandle::estimation(gplanner::OptimalSpotGenerator::Request &req, gplanne
 			if (mab_client.call(mab_req))
 			{
 				ROS_INFO("Response received from MAB");
-
+				ROS_INFO("Area selected is: %d",mab_req.response.area);
+				gp.getBestArea(mab_req.response.area);
 			
 			}
 
@@ -50,6 +56,11 @@ bool ROShandle::estimation(gplanner::OptimalSpotGenerator::Request &req, gplanne
 		{
 			int pos=gp.getBestSpot(i,lplanner_costs);
 
+			if (pos <0 || pos > 104)
+		    {
+		       continue;
+		    }
+
 
 			// cout<<"\nlpanner data goal "<<lplanner_costs.request.goal.pose.position.x<< " "
 			// 		<<lplanner_costs.request.goal.pose.position.y<<" "<<lplanner_costs.request.goal.pose.orientation.x<<" "<<lplanner_costs.request.goal.pose.orientation.y
@@ -61,19 +72,55 @@ bool ROShandle::estimation(gplanner::OptimalSpotGenerator::Request &req, gplanne
 			
 			ROS_INFO("Request sent to local planner");
 			if(lplanner_client.call(lplanner_costs))
-			{
+			{	
+				call=true;
 				ROS_INFO("Response Received from local planner");
 				gp.getPathCosts(pos,lplanner_costs.response.pathcost);
-
+				top5spots.push_back(std::make_pair(pos,lplanner_costs.response.pathcost));
 			}
 
 			else
-			{
+			{	
+				call=false;
 				ROS_INFO("Failed to get response from local planner");
 			}
 		}
 
-		int spotNo=gp.returnFinalSpot();
+		if (call)
+		{
+			auto cost =std::min_element(std::begin(top5spots),std::end(top5spots),
+								[](std::pair<int,double> const& n1 , std::pair<int,double> const& n2)
+									{
+										return n1.second < n2.second;
+									} );
+    
+    		spotNo= top5spots[std::distance(std::begin(top5spots),cost)].first;
+
+    		if (spotNo <0 || spotNo > 103)
+		    {
+		       spotNo=gp.returnFinalSpot();
+		       ROS_WARN(" Invalid Spot selected in MAB: %d", spotNo);
+		    }
+
+    		gp.setState(spotNo);
+
+    
+		}
+		else
+		{
+		 spotNo=gp.returnFinalSpot();
+		if (spotNo <0 || spotNo > 103)
+		    {
+		       ROS_WARN(" Invalid Spot selected in GPLANNER: %d", spotNo);
+		    }	
+		}
+		
+		if (spotNo>103 || spotNo<0)
+		{
+			ROS_WARN(" Invalid Spot selected: %d", spotNo);
+			ROS_WARN(" Spot came from %s", call ? "MAB" : "GPlanner");
+
+		}
 		cout<<endl<<"spot No "<<spotNo;
 		struct envState e= gp.returnConfig(spotNo);
 		cout<<endl<<"coords"<<e.x<<" "<<e.y<<" "<<e.th<<endl;
@@ -90,8 +137,8 @@ void ROShandle::init_ros()
 {
 		optimalSpot = nh.advertiseService("OptimalSpotGenerator",&ROShandle::estimation,this); //initialise the ROS service for the spot query
 		lplanner_client = nh.serviceClient<localplanner::spotsTreadCost>("spotsTreadCost");
-		mab_client=nh.serviceClient<gplanner::mab>("MabPlanner");
+		mab_client=nh.serviceClient<gplanner::mab>("segmentRequest");
 		wtimesub =nh.subscribe("worldtime",10,&globalPlanner::timeUpdate,&gp);
-
+		stateUpdate=  nh.subscribe("return_update",0,&globalPlanner::unpark,&gp);
 	}
 

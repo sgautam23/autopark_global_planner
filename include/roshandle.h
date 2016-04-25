@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 #include <vector>
+#include <utility> 
 #include <std_msgs/String.h>
 #include <tf/transform_broadcaster.h>
 
@@ -49,6 +50,7 @@ private:
 	ros::ServiceClient lplanner_client;
 	ros::ServiceClient mab_client;
 	ros::Subscriber wtimesub;
+	ros::Subscriber stateUpdate;
 
 	globalPlanner gp;
 	localplanner::spotsTreadCost lplanner_costs;

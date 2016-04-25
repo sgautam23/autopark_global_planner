@@ -13,9 +13,9 @@ using namespace std;
 
 globalPlanner::globalPlanner()
 {
-	params.wexit=1.1;
-    params.wpath=1.5;
-    params.woccupied=1.2;
+	params.wexit=0.8;
+    params.wpath=1.0;
+    params.woccupied=1.3;
     params.wqueue=1;
     params.wtime=1;
 
@@ -76,19 +76,21 @@ void globalPlanner::calculateFinalCosts()
     
     for (int i=0; i< nofSpots;i++)
     {
-        
-            finalSpotCosts[i]= params.wexit*exitSpotCosts[i]/sum+ 
-                                params.wqueue*qSize*i/100 +          
-                                params.wtime * (nofSpots-i) + 
+
+        finalSpotCosts[i]= params.wexit*exitSpotCosts[i]/sum+ 
+        params.wqueue*qSize*i/100 +          
+        params.wtime * (nofSpots-i) + 
                                 state[i]*INF + params.wpath* pathcosts[i];
-    }
+                            }
 
 
-}
+                        }
 
 int globalPlanner::getBestSpot(int i,localplanner::spotsTreadCost& lplanner) //get the i'th best spot
 {
-    std::vector<double> costs_temp(finalSpotCosts);
+    // std::vector<double> costs_temp(finalSpotCosts);
+    std::vector<double> costs_temp;
+    costs_temp.assign(finalSpotCosts.begin(),finalSpotCosts.end());
     
     int j=0;
     for (std::vector<double>::iterator it=costs_temp.begin();it!=costs_temp.end();++it,j++)
@@ -96,13 +98,16 @@ int globalPlanner::getBestSpot(int i,localplanner::spotsTreadCost& lplanner) //g
         int ar= spotToArea(j);
         if (ar!=area)
         {
-            *it=INF;
+            *it=INF;        //set the temporary cost of a spot to infinity if not in the selected
+                            //area
         }
     }
 
     std::sort(costs_temp.begin(),costs_temp.end());
+    costs_temp[i]= costs_temp[i]>=INF ? costs_temp[i]=INF :costs_temp[i];
     int pos= find(finalSpotCosts.begin(),finalSpotCosts.end(),costs_temp[i]) - finalSpotCosts.begin();
     
+
 
     struct envState e=pp->spotIDtoCoord(pos);
 
@@ -124,6 +129,18 @@ int globalPlanner::getBestSpot(int i,localplanner::spotsTreadCost& lplanner) //g
 
 }
 
+
+void globalPlanner::unpark(const std_msgs::Int64::ConstPtr& data)
+{
+    state[data->data]=0;
+
+    if (data->data!=0 && data->data!=nofSpots)
+    {
+        state[data->data-1]+=0.00001*params.woccupied;
+        state[data->data+1]+=0.00001*params.woccupied;
+    }
+
+}
 int globalPlanner::spotToArea(int pos)
 {
     struct envState e=pp->spotIDtoCoord(pos);
@@ -136,15 +153,15 @@ int globalPlanner::spotToArea(int pos)
     
     if (e.x< Xmax/2)
     {
-         ar = e.y< Ymax/2 ? 0 : 1;
-    }
+       ar = e.y< Ymax/2 ? 0 : 1;
+   }
 
-    else
-    {
-         ar= e.y <Ymax/2 ? 2 : 3;
-    }
+   else
+   {
+       ar= e.y <Ymax/2 ? 2 : 3;
+   }
 
-    return ar;
+   return ar;
 }
 
 void globalPlanner::getPathCosts(int i, float pathcost)
@@ -174,7 +191,7 @@ void openFile(std::ifstream& file, std::string filename)
 void globalPlanner::useCache()
 {   
     double num=0;
-   
+
     std::ifstream costFile;
     std::string s;
     //std::string cpath = ros::package::getPath("gplanner");
@@ -211,11 +228,23 @@ int globalPlanner::returnFinalSpot()
     state[i]=1;
 
     if (i!=0 || i!=nofSpots)
-        {
-            state[i-1]+=0.00001*params.woccupied;
-            state[i+1]+=0.00001*params.woccupied;}
+    {
+        state[i-1]+=0.00001*params.woccupied;
+        state[i+1]+=0.00001*params.woccupied;
+        
+    }
     return i;
+}
 
+
+void globalPlanner::setState(int pos)
+{
+    state[pos]=1;
+    if (pos!=0 && pos!=nofSpots)
+    {
+        state[pos-1]+=0.00001*params.woccupied;
+        state[pos+1]+=0.00001*params.woccupied;
+    }
 }
 
 void globalPlanner::normalize(std::vector<double>& v)
